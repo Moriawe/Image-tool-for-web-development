@@ -1,0 +1,109 @@
+<!-- Favicon Generator Component -->
+<div class="tab-content {% if active_tab == 'favicon' %}active{% endif %}">
+  <div class="content-card">
+    <h2>Favicon Generator</h2>
+    <p>Generate all necessary favicon files and formats required for modern web applications and progressive web apps. Creates favicons in multiple formats and sizes to ensure compatibility across all devices, operating systems, and browsers, from legacy ICO files to modern PWA icons.</p>
+    
+    <form action="/favicon" method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>1) Choose image</legend>
+        <input type="file" name="images" accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" required>
+        <p class="muted">Upload your logo or icon to generate favicons for all devices and browsers.</p>
+      </fieldset>
+
+    <fieldset>
+      <legend>2) Select favicon sizes</legend>
+      <div class="size-grid">
+        {% for size_key, dimensions in favicon_sizes.items() %}
+        <div class="size-option">
+          <input type="checkbox" id="favicon_{{ size_key }}" name="favicon_sizes" value="{{ size_key }}" 
+                 {% if size_key in ['ico_32', 'png_32', 'png_180', 'png_192'] %}checked{% endif %}>
+          <label for="favicon_{{ size_key }}">
+            {% set spec = favicon_specs[size_key] %}
+            {{ spec.filename }} ({{ dimensions[0] }}×{{ dimensions[1] }}px)
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="muted">Select which favicon sizes to generate. Recommended: at least 32px, Apple Touch Icon, and Android Chrome.</p>
+    </fieldset>
+
+    <fieldset class="row">
+      <div>
+        <legend>3) Background & Output</legend>
+        <label for="background_color">Background color</label>
+        <select id="background_color" name="background_color">
+          <option value="transparent" selected>Transparent</option>
+          <option value="white">White</option>
+          <option value="black">Black</option>
+          <option value="#f8fafc">Light Gray</option>
+          <option value="#1f2937">Dark Gray</option>
+          <option value="#0ea5e9">Brand Blue</option>
+          <option value="custom">Custom Color</option>
+        </select>
+        
+        <div id="custom_color_input" style="display: none; margin-top: 0.5rem;">
+          <label for="custom_hex">Custom hex color</label>
+          <input type="text" id="custom_hex" name="custom_hex" placeholder="#ffffff" pattern="^#[0-9A-Fa-f]{6}$" style="font-family: monospace;">
+          <p class="muted">Enter color in hex format (e.g., #ffffff for white)</p>
+        </div>
+        
+        <p class="muted">Background color for padding around your icon.</p>
+      </div>
+      <div>
+        <legend>4) Output Directory</legend>
+        <label for="favicon_output_dir">Output directory</label>
+        <input type="text" id="favicon_output_dir" name="output_dir" placeholder="e.g. output or C:\Users\you\Pictures\favicons" />
+        <label><input type="checkbox" name="zip"> Download as ZIP</label>
+        <p class="muted">Favicons will include size and purpose in filenames.</p>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit">Generate Favicons</button>
+      <span class="muted">Creates optimized favicons for all devices</span>
+    </div>
+  </form>
+
+  <!-- Favicon Information Panel -->
+  <div class="info-panel" style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+    <h4 class="stylish-title">🎯 Favicon Formats Explained</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+      <div>
+        <strong>ICO Files</strong>
+        <p style="font-size: 0.9em; margin: 0.5rem 0;">Traditional Windows favicon format. Universal browser support.</p>
+      </div>
+      <div>
+        <strong>PNG Files</strong>
+        <p style="font-size: 0.9em; margin: 0.5rem 0;">Modern web standard. Better quality and transparency support.</p>
+      </div>
+      <div>
+        <strong>Apple Touch Icon</strong>
+        <p style="font-size: 0.9em; margin: 0.5rem 0;">Used when users add your site to iOS home screen.</p>
+      </div>
+      <div>
+        <strong>Android Chrome</strong>
+        <p style="font-size: 0.9em; margin: 0.5rem 0;">Progressive Web App icons for Android devices.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Handle custom color input
+document.addEventListener('DOMContentLoaded', function() {
+  const backgroundSelect = document.getElementById('background_color');
+  const customColorDiv = document.getElementById('custom_color_input');
+  
+  if (backgroundSelect && customColorDiv) {
+    backgroundSelect.addEventListener('change', function() {
+      if (this.value === 'custom') {
+        customColorDiv.style.display = 'block';
+      } else {
+        customColorDiv.style.display = 'none';
+      }
+    });
+  }
+});
+</script>
+</div>

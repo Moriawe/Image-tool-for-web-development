@@ -1,0 +1,74 @@
+<!-- Thumbnail Generator Component -->
+<div class="tab-content {% if active_tab == 'thumbnail' %}active{% endif %}">
+  <div class="content-card">
+    <h2>Thumbnail Generator</h2>
+    <p>Generate perfectly cropped square thumbnails in multiple sizes using intelligent cropping algorithms. Automatically handles aspect ratio adjustments and provides various cropping options to ensure the most important parts of images are preserved.</p>
+    
+    <form action="/thumbnail" method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>1) Choose images</legend>
+        <input type="file" name="images" accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" multiple required>
+        <p class="muted">Generate square thumbnails perfect for galleries, profiles, and cards.</p>
+      </fieldset>
+
+    <fieldset>
+      <legend>2) Select thumbnail sizes</legend>
+      <div class="size-grid">
+        {% for size_name, dimensions in thumbnail_sizes.items() %}
+        <div class="size-option">
+          <input type="checkbox" id="thumb_{{ size_name }}" name="thumb_sizes" value="{{ size_name }}" 
+                 {% if size_name in ['small', 'medium', 'gallery'] %}checked{% endif %}>
+          <label for="thumb_{{ size_name }}">{{ size_name.title() }} ({{ dimensions[0] }}×{{ dimensions[1] }}px)</label>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="muted">Select which thumbnail sizes to generate. All thumbnails will be square.</p>
+    </fieldset>
+
+    <fieldset class="row">
+      <div>
+        <legend>3) Cropping & Format</legend>
+        <label for="crop_method">Crop method</label>
+        <select id="crop_method" name="crop_method">
+          {% for method_key, method_name in crop_methods.items() %}
+          <option value="{{ method_key }}" {% if method_key == 'center' %}selected{% endif %}>
+            {{ method_name.title() }} crop
+          </option>
+          {% endfor %}
+        </select>
+        
+        <label for="format_type">Output format</label>
+        <select id="format_type" name="format_type" onchange="toggleFormatOptions('thumb')">
+          <option value="webp" selected>WebP (best compression)</option>
+          <option value="jpeg">JPEG (universal)</option>
+          <option value="png">PNG (lossless)</option>
+          <option value="avif">AVIF (next-gen)</option>
+        </select>
+        
+        <div id="thumb_lossless_option" class="format-option">
+          <label><input type="checkbox" name="lossless"> Lossless compression</label>
+          <p class="format-help">Better quality, larger file size</p>
+        </div>
+      </div>
+      <div>
+        <legend>4) Quality & Output</legend>
+        <div id="thumb_quality_option" class="format-option">
+          <label for="thumb_quality">Quality</label>
+          <input type="range" id="thumb_quality" name="quality" min="1" max="100" value="{{ quality or 82 }}" oninput="thumbQVal.textContent=this.value" />
+          <div>Q: <span id="thumbQVal">{{ quality or 82 }}</span></div>
+        </div>
+        
+        <label for="thumb_output_dir">Output directory</label>
+        <input type="text" id="thumb_output_dir" name="output_dir" placeholder="e.g. output or C:\Users\you\Pictures\thumbnails" />
+        <label><input type="checkbox" name="zip"> Download as ZIP</label>
+        <p class="muted">Thumbnails will include size and crop info in filenames.</p>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit">Generate Thumbnails</button>
+      <span class="muted">Creates square thumbnails with smart cropping</span>
+    </div>
+  </form>
+  </div>
+</div>

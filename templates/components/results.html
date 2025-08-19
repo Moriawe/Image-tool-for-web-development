@@ -1,0 +1,337 @@
+<!-- Results Display Component -->
+{% if done %}
+<div class="results">
+  <p class="ok">✅ Done! Saved to: <strong>{{ out_dir }}</strong></p>
+  
+  {% if items %}
+    <h3>📁 Converted Images</h3>
+    <ul class="list">
+      {% for item, link in items %}
+        <li>
+          {{ item.filename if item.filename else item.name }} 
+          <span class="badge">{{ item.size_kb }} KB</span>
+          {% if item.format %}
+            <span class="badge">{{ item.format }}</span>
+          {% endif %}
+          {% if item.dimensions %}
+            <span class="badge">{{ item.dimensions }}</span>
+          {% endif %}
+          {% if item.purpose %}
+            <span class="badge">{{ item.purpose }}</span>
+          {% endif %}
+          {% if item.crop_method %}
+            <span class="badge">{{ item.crop_method }} crop</span>
+          {% endif %}
+          {% if item.quality %}
+            <span class="badge">Q: {{ item.quality }}</span>
+          {% endif %}
+          – <a href="{{ link }}">download</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if comparisons %}
+    <h3>⚖️ Format Comparison</h3>
+    <p class="muted">File size comparison across different formats:</p>
+    {% for comparison in comparisons %}
+      <div class="comparison-table" style="margin: 1rem 0; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h4 style="margin: 0 0 0.5rem 0;">{{ comparison.original }}</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
+          {% for format_key, result in comparison.formats.items() %}
+            <div class="format-result" style="text-align: center; padding: 0.5rem; background: #f8fafc; border-radius: 4px;">
+              {% if result.error %}
+                <strong>{{ format_key.upper() }}</strong><br>
+                <span style="color: #ef4444; font-size: 0.8em;">{{ result.error }}</span>
+              {% else %}
+                <strong>{{ format_key.upper() }}</strong><br>
+                <span class="badge">{{ result.size_kb }} KB</span><br>
+                <a href="{{ url_for('serve_output', filename=result.filename) }}" style="font-size: 0.8em;">download</a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if srcset_example %}
+    <h3>📋 HTML Examples</h3>
+    <p class="muted">Copy and paste these responsive image examples into your HTML:</p>
+    {% for example in srcset_example %}
+      <div class="code-block">{{ example }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if css_examples %}
+    <h3>🎨 CSS Examples</h3>
+    <p class="muted">Copy and paste these CSS classes for your thumbnails:</p>
+    {% for css in css_examples %}
+      <div class="code-block">{{ css }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if html_examples %}
+    <h3>🖼️ HTML Usage Examples</h3>
+    <p class="muted">How to use your thumbnails in HTML:</p>
+    {% for html in html_examples %}
+      <div class="code-block">{{ html }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if html_example %}
+    <h3>🔗 Favicon HTML Integration</h3>
+    <p class="muted">Add this code to your HTML &lt;head&gt; section:</p>
+    <div class="code-block">{{ html_example }}</div>
+  {% endif %}
+
+  {% if manifest_example %}
+    <h3>📱 Web App Manifest (site.webmanifest)</h3>
+    <p class="muted">Create a site.webmanifest file for PWA support:</p>
+    <div class="code-block">{{ manifest_example }}</div>
+  {% endif %}
+
+  {% if optimization_results %}
+    <h3>🚀 Optimization Results</h3>
+    {% if batch_stats %}
+      <div class="optimization-summary" style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">📊 Batch Summary</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; font-size: 0.9em;">
+          <div><strong>Files Processed:</strong> {{ batch_stats.successful }}/{{ batch_stats.total_files }}</div>
+          <div><strong>Total Savings:</strong> {{ batch_stats.total_savings_kb }} KB</div>
+          <div><strong>Compression:</strong> {{ batch_stats.overall_compression_ratio }}%</div>
+          <div><strong>Original Size:</strong> {{ batch_stats.total_original_kb }} KB</div>
+          <div><strong>Final Size:</strong> {{ batch_stats.total_optimized_kb }} KB</div>
+        </div>
+      </div>
+    {% endif %}
+    
+    <ul class="list">
+      {% for result in optimization_results %}
+        <li style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.75rem 0;">
+          <span style="font-weight: 500;">{{ result.filename }}</span>
+          <span class="badge">{{ result.size_kb }} KB</span>
+          <span class="badge">{{ result.format }}</span>
+          <span class="badge">{{ result.optimized_dimensions }}</span>
+          <span class="badge">Q: {{ result.quality }}</span>
+          <span class="badge" style="background: #10b981; color: white;">{{ result.compression_ratio }}% saved</span>
+          <span class="badge">{{ result.preset }}</span>
+          {% if result.metadata_stripped %}
+            <span class="badge" style="background: #6366f1; color: white;">Metadata Stripped</span>
+          {% endif %}
+          <a href="{{ url_for('serve_output', filename=result.filename) }}" style="margin-left: auto;">download</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if optimization_report %}
+    <h3>📈 Optimization Report</h3>
+    <div class="optimization-report" style="background: #fefce8; border: 1px solid #eab308; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div>
+          <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">Summary</h4>
+          <div style="font-size: 0.9em;">
+            <div><strong>Files:</strong> {{ optimization_report.summary.total_files }}</div>
+            <div><strong>Total Size:</strong> {{ optimization_report.summary.total_size_kb }} KB</div>
+            <div><strong>Avg Compression:</strong> {{ optimization_report.summary.average_compression_ratio }}%</div>
+          </div>
+        </div>
+        
+        {% if optimization_report.format_breakdown %}
+        <div>
+          <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">Format Breakdown</h4>
+          <div style="font-size: 0.9em;">
+            {% for format, stats in optimization_report.format_breakdown.items() %}
+              <div>{{ format }}: {{ stats.count }} files ({{ stats.total_kb }} KB)</div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if optimization_report.quality_distribution %}
+        <div>
+          <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">Quality Distribution</h4>
+          <div style="font-size: 0.9em;">
+            {% for quality, count in optimization_report.quality_distribution.items() %}
+              <div>Q{{ quality }}: {{ count }} files</div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if optimization_errors %}
+    <h3>⚠️ Processing Errors</h3>
+    <ul class="list" style="border: 1px solid #f87171; background: #fef2f2; border-radius: 8px; padding: 1rem;">
+      {% for error in optimization_errors %}
+        <li style="color: #dc2626;">
+          <strong>{{ error.filename }}:</strong> {{ error.error }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if analysis_results %}
+    <h3>🔍 Image Analysis Results</h3>
+    
+    {% if batch_insights and not is_single_analysis %}
+      <div class="analysis-summary" style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #15803d;">📊 Batch Analysis Summary</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; font-size: 0.9em;">
+          <div><strong>Total Files:</strong> {{ batch_insights.summary.total_files }}</div>
+          <div><strong>Total Size:</strong> {{ batch_insights.summary.total_megapixels }} MP</div>
+          <div><strong>Avg Size:</strong> {{ batch_insights.summary.avg_megapixels }} MP</div>
+          <div><strong>Need Optimization:</strong> {{ batch_insights.summary.needs_optimization }} ({{ batch_insights.summary.optimization_percentage }}%)</div>
+        </div>
+        
+        {% if batch_insights.insights %}
+          <div style="margin-top: 1rem;">
+            <strong>Batch Recommendations:</strong>
+            <ul style="margin: 0.5rem 0;">
+              {% for insight in batch_insights.insights %}
+                <li>{{ insight.message }} - <em>{{ insight.action }}</em></li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% for analysis in analysis_results %}
+      <div class="analysis-result" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; background: #fafafa;">
+        <h4 style="margin: 0 0 1rem 0; color: #374151;">📁 {{ analysis.filename }}</h4>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+          <!-- Basic Information -->
+          <div>
+            <h5 style="margin: 0 0 0.5rem 0; color: #1f2937;">📏 Basic Information</h5>
+            <div style="font-size: 0.9em; line-height: 1.5;">
+              <div><strong>Size:</strong> {{ analysis.basic_info.dimensions }} ({{ analysis.basic_info.megapixels }} MP)</div>
+              <div><strong>Format:</strong> {{ analysis.basic_info.format }} ({{ analysis.basic_info.mode }})</div>
+              <div><strong>Category:</strong> {{ analysis.basic_info.category|title }}</div>
+              <div><strong>Aspect Ratio:</strong> {{ analysis.basic_info.aspect_ratio }}</div>
+              {% if analysis.basic_info.has_transparency %}
+                <div style="color: #0ea5e9;"><strong>✓ Has Transparency</strong></div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Color Analysis -->
+          <div>
+            <h5 style="margin: 0 0 0.5rem 0; color: #1f2937;">🎨 Color Analysis</h5>
+            <div style="font-size: 0.9em; line-height: 1.5;">
+              <div><strong>Brightness:</strong> {{ analysis.color_analysis.brightness }}/255</div>
+              <div><strong>Color Range:</strong> {{ analysis.color_analysis.avg_color_range }}</div>
+              <div><strong>Complexity:</strong> {{ analysis.color_analysis.color_complexity|title }}</div>
+              <div><strong>Unique Colors:</strong> {{ analysis.color_analysis.unique_colors }}</div>
+              {% if analysis.color_analysis.is_monochrome %}
+                <div style="color: #6b7280;">⚪ Monochrome Image</div>
+              {% endif %}
+              {% if analysis.color_analysis.is_high_contrast %}
+                <div style="color: #dc2626;">⚡ High Contrast</div>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if is_single_analysis %}
+            <!-- Detailed Analysis for Single Images -->
+            <!-- Complexity Analysis -->
+            <div>
+              <h5 style="margin: 0 0 0.5rem 0; color: #1f2937;">🧩 Complexity Analysis</h5>
+              <div style="font-size: 0.9em; line-height: 1.5;">
+                <div><strong>Detail Level:</strong> {{ analysis.complexity_analysis.detail_level|title }}</div>
+                <div><strong>Texture:</strong> {{ analysis.complexity_analysis.texture|title }}</div>
+                <div><strong>Edge Density:</strong> {{ analysis.complexity_analysis.edge_density }}</div>
+                {% if analysis.complexity_analysis.is_photo_likely %}
+                  <div style="color: #059669;">📷 Likely Photograph</div>
+                {% endif %}
+                {% if analysis.complexity_analysis.is_graphic_likely %}
+                  <div style="color: #7c3aed;">🎨 Likely Graphic/Logo</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Format Recommendations -->
+            <div>
+              <h5 style="margin: 0 0 0.5rem 0; color: #1f2937;">🏆 Format Recommendations</h5>
+              <div style="font-size: 0.9em;">
+                <div style="margin-bottom: 0.5rem;"><strong>Best:</strong> {{ analysis.format_recommendations.best_format|upper }}</div>
+                {% for format, rec in analysis.format_recommendations.recommendations.items() %}
+                  <div style="display: flex; align-items: center; margin: 0.25rem 0;">
+                    <span style="font-weight: 500; width: 60px;">{{ format|upper }}:</span>
+                    <div style="background: #e5e7eb; height: 4px; flex: 1; margin: 0 0.5rem; border-radius: 2px;">
+                      <div style="background: {% if rec.score >= 80 %}#10b981{% elif rec.score >= 60 %}#f59e0b{% else %}#ef4444{% endif %}; height: 100%; width: {{ rec.score }}%; border-radius: 2px;"></div>
+                    </div>
+                    <span>{{ rec.score }}%</span>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Web Performance Metrics -->
+            <div>
+              <h5 style="margin: 0 0 0.5rem 0; color: #1f2937;">⚡ Web Performance</h5>
+              <div style="font-size: 0.9em; line-height: 1.5;">
+                <div><strong>Performance Score:</strong> {{ analysis.web_metrics.performance_score|round }}/100</div>
+                <div><strong>Estimated JPEG (Q85):</strong> {{ analysis.web_metrics.estimated_sizes.jpeg.quality_85 }} KB</div>
+                <div><strong>Estimated WebP (Q85):</strong> {{ analysis.web_metrics.estimated_sizes.webp.quality_85 }} KB</div>
+                <div><strong>Loading (3G):</strong> {{ analysis.web_metrics.loading_times.webp['3g'] }}s</div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        {% if is_single_analysis and analysis.optimization_suggestions.suggestions %}
+          <!-- Optimization Suggestions -->
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d1d5db;">
+            <h5 style="margin: 0 0 0.5rem 0; color: #1f2937;">💡 Optimization Suggestions</h5>
+            <div style="font-size: 0.9em;">
+              {% for suggestion in analysis.optimization_suggestions.suggestions %}
+                <div style="margin: 0.5rem 0; padding: 0.5rem; background: {% if suggestion.priority == 'high' %}#fef2f2{% elif suggestion.priority == 'medium' %}#fefce8{% else %}#f0f9ff{% endif %}; border-radius: 4px;">
+                  <div style="font-weight: 500; color: {% if suggestion.priority == 'high' %}#dc2626{% elif suggestion.priority == 'medium' %}#d97706{% else %}#2563eb{% endif %};">
+                    {{ suggestion.priority|upper }} PRIORITY: {{ suggestion.suggestion }}
+                  </div>
+                  <div style="color: #6b7280; margin-top: 0.25rem;">{{ suggestion.details }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if is_single_analysis and analysis.color_analysis.dominant_colors %}
+          <!-- Color Palette -->
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d1d5db;">
+            <h5 style="margin: 0 0 0.5rem 0; color: #1f2937;">🎨 Dominant Colors</h5>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+              {% for color_info in analysis.color_analysis.dominant_colors[:5] %}
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 6px; background: #f9fafb;">
+                  <div style="width: 32px; height: 32px; border-radius: 4px; border: 1px solid #d1d5db; background: {{ color_info.hex }}; flex-shrink: 0;"></div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600; font-size: 0.75em; color: #1f2937;">{{ color_info.hex.upper() }}</div>
+                    <div style="font-size: 0.7em; color: #6b7280;">RGB({{ color_info.rgb.r }}, {{ color_info.rgb.g }}, {{ color_info.rgb.b }})</div>
+                    <div style="font-size: 0.65em; color: #9ca3af;">{{ color_info.percentage }}%</div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if analysis_errors %}
+    <h3>⚠️ Analysis Errors</h3>
+    <ul class="list" style="border: 1px solid #f87171; background: #fef2f2; border-radius: 8px; padding: 1rem;">
+      {% for error in analysis_errors %}
+        <li style="color: #dc2626;">
+          <strong>{{ error.filename }}:</strong> {{ error.error }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,111 @@
+<!-- Image Optimization Suite Component -->
+<div class="tab-content {% if active_tab == 'optimize' %}active{% endif %}" id="optimize">
+  <div class="content-card">
+    <h2>Image Optimization Suite</h2>
+    <p>Advanced optimization tools for reducing file sizes and improving web performance with intelligent presets and batch processing capabilities. Choose from predefined optimization profiles or customize settings for your specific needs.</p>
+    
+    <form method="post" action="/optimize" enctype="multipart/form-data">
+      <!-- File Upload -->
+      <fieldset>
+        <legend>1) Choose images</legend>
+        <input type="file" id="opt-images" name="images" multiple accept="image/*" required>
+        <p class="muted">Upload one or more images for intelligent optimization and compression.</p>
+      </fieldset>
+
+      <!-- Optimization Preset -->
+      <fieldset>
+        <legend>2) Select optimization preset</legend>
+        <select id="preset" name="preset" onchange="updatePresetInfo()">
+          {% for preset_key, preset_info in optimization_presets.items() %}
+          <option value="{{ preset_key }}" {% if preset == preset_key or (not preset and preset_key == 'web_basic') %}selected{% endif %}>
+            {{ preset_info.name }} - {{ preset_info.description }}
+          </option>
+          {% endfor %}
+        </select>
+        <div id="preset-info" class="info-box"></div>
+      </fieldset>
+
+      <!-- Output Format -->
+      <fieldset>
+        <legend>3) Select output format</legend>
+        <select id="output_format" name="output_format">
+          <option value="auto" {% if output_format == 'auto' or not output_format %}selected{% endif %}>Auto (Best for each image)</option>
+          {% for format_key, format_info in web_formats.items() %}
+          <option value="{{ format_key }}" {% if output_format == format_key %}selected{% endif %}>
+            {{ format_info.name }} ({{ format_info.ext }})
+          </option>
+          {% endfor %}
+        </select>
+        <p class="muted">Auto mode intelligently selects the best format for each image</p>
+      </fieldset>
+
+      <!-- Custom Settings -->
+      <div class="form-group">
+        <details>
+          <summary>🔧 Custom Settings (Optional)</summary>
+          <div class="custom-settings">
+            <div class="form-row">
+              <div class="form-col">
+                <label for="custom_quality">Custom Quality (1-100):</label>
+                <input type="number" id="custom_quality" name="custom_quality" min="1" max="100" placeholder="Leave empty to use preset">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-col">
+                <label for="custom_max_width">Max Width (px):</label>
+                <input type="number" id="custom_max_width" name="custom_max_width" min="100" max="4000" placeholder="Leave empty to use preset">
+              </div>
+              <div class="form-col">
+                <label for="custom_max_height">Max Height (px):</label>
+                <input type="number" id="custom_max_height" name="custom_max_height" min="100" max="4000" placeholder="Leave empty to use preset">
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Processing Options -->
+      <fieldset>
+        <legend>4) Processing options</legend>
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" name="batch_mode" {% if batch_mode %}checked{% endif %}>
+            Batch Processing Mode (faster for multiple images)
+          </label>
+          <label>
+            <input type="checkbox" name="zip" {% if zip %}checked{% endif %}>
+            Download as ZIP file
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit">Optimize Images</button>
+        <span class="muted">Intelligent compression with detailed reports</span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function updatePresetInfo() {
+  const presets = {{ optimization_presets | tojson }};
+  const select = document.getElementById('preset');
+  const info = document.getElementById('preset-info');
+  
+  const preset = presets[select.value];
+  if (preset) {
+    info.innerHTML = `
+      <strong>${preset.name}</strong><br>
+      Max Size: ${preset.max_width}×${preset.max_height}px<br>
+      Quality: ${preset.quality}%<br>
+      ${preset.strip_metadata ? '✓' : '✗'} Strip Metadata<br>
+      ${preset.progressive ? '✓' : '✗'} Progressive<br>
+      ${preset.optimize ? '✓' : '✗'} Optimize
+    `;
+  }
+}
+
+// Initialize preset info on page load
+document.addEventListener('DOMContentLoaded', updatePresetInfo);
+</script>

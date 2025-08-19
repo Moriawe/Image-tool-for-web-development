@@ -1,0 +1,65 @@
+<!-- Universal Image Format Converter Component -->
+<div class="tab-content {% if active_tab == 'webp' or not active_tab %}active{% endif %}">
+  <div class="content-card">
+    <h2>Universal Format Converter</h2>
+    <p>Convert images between WebP, JPEG, PNG, and AVIF formats with intelligent optimization. Automatically applies format-specific optimizations while preserving image quality and reducing file sizes for better web performance.</p>
+    
+    <form action="/convert" method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>1) Choose images</legend>
+        <input type="file" name="images" accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" multiple required>
+        <p class="muted">Convert images to modern web formats with optimization.</p>
+      </fieldset>
+
+    <fieldset class="row">
+      <div>
+        <legend>2) Output format & quality</legend>
+        <label for="output_format">Output format</label>
+        <select id="output_format" name="output_format" onchange="updateFormatOptions()">
+          <option value="webp" selected>WebP (recommended)</option>
+          <option value="avif">AVIF (next-gen)</option>
+          <option value="jpeg">JPEG (compatible)</option>
+          <option value="png">PNG (lossless)</option>
+        </select>
+        
+        <div id="quality_section">
+          <label for="quality">Quality</label>
+          <input type="range" id="quality" name="quality" min="1" max="100" value="{{ quality or 85 }}" oninput="qVal.textContent=this.value" />
+          <div>Q: <span id="qVal">{{ quality or 85 }}</span></div>
+        </div>
+
+        <div id="lossless_section">
+          <label><input type="checkbox" name="lossless" {% if lossless %}checked{% endif %}> Lossless compression</label>
+          <p class="muted">Lossless provides perfect quality but larger file sizes.</p>
+        </div>
+        
+        <div id="comparison_option">
+          <label><input type="checkbox" name="format_comparison"> Generate format comparison</label>
+          <p class="muted">Creates the same image in all formats to compare file sizes.</p>
+        </div>
+      </div>
+      <div>
+        <legend>3) Output options</legend>
+        <label for="output_dir">Output directory</label>
+        <input type="text" id="output_dir" name="output_dir" placeholder="e.g. output or C:\Users\you\Pictures\converted" />
+        <label><input type="checkbox" name="zip"> Download as ZIP</label>
+        <p class="muted">Leave empty to save in <code>./output</code> folder.</p>
+        
+        <div class="format-info" id="format_info">
+          <h4>WebP Benefits:</h4>
+          <ul style="font-size: 0.85em; margin: 0.5rem 0;">
+            <li>25-35% smaller than JPEG</li>
+            <li>Supports transparency</li>
+            <li>Excellent browser support</li>
+          </ul>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit">Convert Images</button>
+      <span class="muted">Optimized for web performance</span>
+    </div>
+  </form>
+  </div>
+</div>

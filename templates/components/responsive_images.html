@@ -1,0 +1,52 @@
+<!-- Responsive Images Component -->
+<div class="tab-content {% if active_tab == 'responsive' %}active{% endif %}">
+  <div class="content-card">
+    <h2>Responsive Image Generator</h2>
+    <p>Create multiple image sizes optimized for responsive web design across different devices and screen resolutions. Generates properly sized images along with ready-to-use HTML and CSS code for seamless integration into responsive websites.</p>
+    
+    <form action="/responsive" method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>1) Choose images</legend>
+        <input type="file" name="images" accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" multiple required>
+        <p class="muted">Generate multiple sizes for responsive web design.</p>
+      </fieldset>
+
+    <fieldset>
+      <legend>2) Select image sizes</legend>
+      <div class="size-grid">
+        {% for size_name, width in responsive_sizes.items() %}
+        <div class="size-option">
+          <input type="checkbox" id="{{ size_name }}" name="sizes" value="{{ size_name }}" 
+                 {% if size_name in ['mobile', 'tablet', 'desktop'] %}checked{% endif %}>
+          <label for="{{ size_name }}">{{ size_name.replace('-', ' ').title() }} ({{ width }}px)</label>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="muted">Select which sizes to generate. Only sizes smaller than the original will be created.</p>
+    </fieldset>
+
+    <fieldset class="row">
+      <div>
+        <legend>3) Quality settings</legend>
+        <label for="resp_quality">Quality</label>
+        <input type="range" id="resp_quality" name="quality" min="1" max="100" value="{{ quality or 82 }}" oninput="respQVal.textContent=this.value" />
+        <div>Q: <span id="respQVal">{{ quality or 82 }}</span></div>
+
+        <label><input type="checkbox" name="lossless" {% if lossless %}checked{% endif %}> Lossless WebP</label>
+      </div>
+      <div>
+        <legend>4) Output options</legend>
+        <label for="resp_output_dir">Output directory</label>
+        <input type="text" id="resp_output_dir" name="output_dir" placeholder="e.g. output or C:\Users\you\Pictures\responsive" />
+        <label><input type="checkbox" name="zip"> Download as ZIP</label>
+        <p class="muted">Images will include size suffixes in filenames.</p>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit">Generate Responsive Images</button>
+      <span class="muted">Creates multiple sizes + HTML examples</span>
+    </div>
+  </form>
+  </div>
+</div>

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Tab Navigation -->
+  {% include "components/tabs.html" %}
+
+  <!-- WebP Converter Tab -->
+  {% include "components/webp_converter.html" %}
+
+  <!-- Responsive Images Tab -->
+  {% include "components/responsive_images.html" %}
+
+  <!-- Thumbnail Generator Tab -->
+  {% include "components/thumbnail_generator.html" %}
+
+  <!-- Favicon Generator Tab -->
+  {% include "components/favicon_generator.html" %}
+
+  <!-- Image Optimization Suite Tab -->
+  {% include "components/optimization_suite.html" %}
+
+  <!-- Image Analysis Tools Tab -->
+  {% include "components/image_analysis.html" %}
+
+  <!-- Results Section -->
+  {% include "components/results.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleLossless() {
+  const formatSelect = document.getElementById('format_type');
+  const losslessOption = document.getElementById('lossless_option');
+  
+  if (formatSelect && losslessOption) {
+    if (formatSelect.value === 'webp') {
+      losslessOption.style.display = 'block';
+    } else {
+      losslessOption.style.display = 'none';
+    }
+  }
+}
+
+function toggleFormatOptions(prefix = '') {
+  const formatSelect = document.getElementById(prefix ? `${prefix}_format_type` : 'output_format');
+  const qualitySection = document.getElementById(prefix ? `${prefix}_quality_option` : 'quality_section');
+  const losslessSection = document.getElementById(prefix ? `${prefix}_lossless_option` : 'lossless_section');
+  const formatInfo = document.getElementById(prefix ? `${prefix}_format_info` : 'format_info');
+  
+  if (!formatSelect) return;
+  
+  const format = formatSelect.value;
+  
+  // Format-specific information
+  const formatInfoData = {
+    webp: {
+      title: "WebP Benefits:",
+      points: [
+        "25-35% smaller than JPEG",
+        "Supports transparency", 
+        "Excellent browser support"
+      ]
+    },
+    avif: {
+      title: "AVIF Benefits:",
+      points: [
+        "50% smaller than JPEG",
+        "Superior compression",
+        "Growing browser support"
+      ]
+    },
+    jpeg: {
+      title: "JPEG Benefits:",
+      points: [
+        "Universal compatibility",
+        "Small file sizes",
+        "Best for photos"
+      ]
+    },
+    png: {
+      title: "PNG Benefits:",
+      points: [
+        "Lossless compression",
+        "Supports transparency",
+        "Best for graphics & logos"
+      ]
+    }
+  };
+  
+  // Update format info if element exists
+  if (formatInfo && formatInfoData[format]) {
+    const info = formatInfoData[format];
+    formatInfo.innerHTML = `
+      <h4>${info.title}</h4>
+      <ul style="font-size: 0.85em; margin: 0.5rem 0;">
+        ${info.points.map(point => `<li>${point}</li>`).join('')}
+      </ul>
+    `;
+  }
+  
+  // Show/hide options based on format
+  if (format === 'png') {
+    // PNG is inherently lossless
+    if (qualitySection) qualitySection.style.display = 'none';
+    if (losslessSection) losslessSection.style.display = 'none';
+  } else if (format === 'jpeg') {
+    // JPEG doesn't support lossless
+    if (qualitySection) qualitySection.style.display = 'block';
+    if (losslessSection) losslessSection.style.display = 'none';
+  } else {
+    // WebP and AVIF support both
+    if (qualitySection) qualitySection.style.display = 'block';
+    if (losslessSection) losslessSection.style.display = 'block';
+  }
+}
+
+function updateFormatOptions() {
+  toggleFormatOptions();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  toggleLossless();
+  updateFormatOptions();
+  toggleFormatOptions('thumb'); // For thumbnail generator
+});
+</script>
+{% endblock %}

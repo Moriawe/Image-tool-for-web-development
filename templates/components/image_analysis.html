@@ -1,0 +1,56 @@
+<!-- Image Analysis Tools Component -->
+<div class="tab-content {% if active_tab == 'analyze' %}active{% endif %}" id="analyze">
+  <div class="content-card">
+    <h2>Image Analysis Tools</h2>
+    <p>Get detailed insights about your images including color analysis, complexity metrics, format recommendations, and optimization suggestions. Choose single image analysis for comprehensive details or batch analysis for overview insights.</p>
+    
+    <form method="post" action="/analyze" enctype="multipart/form-data">
+      <!-- File Upload -->
+      <fieldset>
+        <legend>1) Choose images for analysis</legend>
+        <input type="file" id="analyze-images" name="images" multiple accept="image/*" required>
+        <p class="muted">Upload one or more images for comprehensive analysis and insights.</p>
+      </fieldset>
+
+      <!-- Analysis Options -->
+      <fieldset>
+        <legend>2) Analysis features</legend>
+        <div class="info-box">
+          <h4>What You'll Get:</h4>
+          <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+            <li><strong>Basic Info:</strong> Dimensions, file size, aspect ratio, color mode</li>
+            <li><strong>Color Analysis:</strong> Color complexity, dominant colors, harmony analysis</li>
+            <li><strong>Complexity Metrics:</strong> Detail level, texture analysis, photo vs graphic detection</li>
+            <li><strong>Format Recommendations:</strong> Best format choices with scores and reasons</li>
+            <li><strong>Optimization Suggestions:</strong> Size, quality, and format optimization tips</li>
+            <li><strong>Web Performance:</strong> Loading time estimates and file size projections</li>
+            <li><strong>Metadata Analysis:</strong> EXIF data extraction and privacy considerations</li>
+          </ul>
+        </div>
+      </fieldset>
+
+      <!-- Analysis Mode Info -->
+      <fieldset>
+        <legend>3) Analysis modes available</legend>
+        <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 1rem;">
+          <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">Analysis Modes</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9em;">
+            <div>
+              <strong>Single Image:</strong><br>
+              Comprehensive analysis with detailed recommendations, color harmony, complexity metrics, and format scoring.
+            </div>
+            <div>
+              <strong>Batch Analysis:</strong><br>
+              Overview analysis with batch insights, optimization potential, and collective recommendations.
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit">Analyze Images</button>
+        <span class="muted">Deep insights and intelligent recommendations</span>
+      </div>
+    </form>
+  </div>
+</div>
