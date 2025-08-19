@@ -15,7 +15,7 @@
       <div>
         <legend>2) Output format & quality</legend>
         <label for="output_format">Output format</label>
-        <select id="output_format" name="output_format" onchange="updateFormatOptions()">
+        <select id="output_format" name="output_format" onchange="updateFormatOptions()" onload="updateFormatOptions()">
           <option value="webp" selected>WebP (recommended)</option>
           <option value="avif">AVIF (next-gen)</option>
           <option value="jpeg">JPEG (compatible)</option>
@@ -46,12 +46,7 @@
         <p class="muted">Leave empty to save in <code>./output</code> folder.</p>
         
         <div class="format-info" id="format_info">
-          <h4>WebP Benefits:</h4>
-          <ul style="font-size: 0.85em; margin: 0.5rem 0;">
-            <li>25-35% smaller than JPEG</li>
-            <li>Supports transparency</li>
-            <li>Excellent browser support</li>
-          </ul>
+          <!-- Dynamic content will be inserted here by JavaScript -->
         </div>
       </div>
     </fieldset>
@@ -63,3 +58,91 @@
   </form>
   </div>
 </div>
+
+<script>
+// Dynamic format benefits functionality
+function updateFormatOptions() {
+  const formatSelect = document.getElementById('output_format');
+  const formatInfo = document.getElementById('format_info');
+  const qualitySection = document.getElementById('quality_section');
+  const losslessSection = document.getElementById('lossless_section');
+  
+  if (!formatSelect || !formatInfo) return;
+  
+  const format = formatSelect.value;
+  
+  // Format-specific information
+  const formatData = {
+    webp: {
+      title: "WebP Benefits:",
+      benefits: [
+        "25-35% smaller than JPEG",
+        "Supports transparency",
+        "Excellent browser support"
+      ]
+    },
+    avif: {
+      title: "AVIF Benefits:",
+      benefits: [
+        "50% smaller than JPEG", 
+        "Superior compression algorithm",
+        "Growing browser support"
+      ]
+    },
+    jpeg: {
+      title: "JPEG Benefits:",
+      benefits: [
+        "Universal compatibility",
+        "Small file sizes for photos",
+        "Best for photographic content"
+      ]
+    },
+    png: {
+      title: "PNG Benefits:",
+      benefits: [
+        "Lossless compression",
+        "Perfect transparency support",
+        "Best for graphics & logos"
+      ]
+    }
+  };
+  
+  // Update format info
+  const data = formatData[format];
+  if (data) {
+    formatInfo.innerHTML = `
+      <h4>${data.title}</h4>
+      <ul style="font-size: 0.85em; margin: 0.5rem 0;">
+        ${data.benefits.map(benefit => `<li>${benefit}</li>`).join('')}
+      </ul>
+    `;
+  }
+  
+  // Show/hide options based on format
+  if (format === 'png') {
+    // PNG is inherently lossless
+    if (qualitySection) qualitySection.style.display = 'none';
+    if (losslessSection) losslessSection.style.display = 'none';
+  } else if (format === 'jpeg') {
+    // JPEG doesn't support lossless
+    if (qualitySection) qualitySection.style.display = 'block';
+    if (losslessSection) losslessSection.style.display = 'none';
+  } else {
+    // WebP and AVIF support both
+    if (qualitySection) qualitySection.style.display = 'block';
+    if (losslessSection) losslessSection.style.display = 'block';
+  }
+}
+
+// Initialize when page loads and this component is ready
+document.addEventListener('DOMContentLoaded', function() {
+  updateFormatOptions(); // Set initial state
+});
+
+// Also call immediately in case DOM is already ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', updateFormatOptions);
+} else {
+  updateFormatOptions();
+}
+</script>

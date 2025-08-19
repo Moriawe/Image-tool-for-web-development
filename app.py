@@ -37,6 +37,21 @@ from image_processing.optimization_suite import (
     OPTIMIZATION_PRESETS
 )
 
+# Import SVG toolkit functions
+from image_processing.svg_toolkit import (
+    validate_svg,
+    optimize_svg,
+    svg_to_png_multi_density,
+    generate_app_icons,
+    generate_color_variants,
+    analyze_svg_complexity,
+    generate_svg_report,
+    MOBILE_DENSITIES,
+    IOS_ICON_SIZES,
+    ANDROID_ICON_SIZES,
+    FLUTTER_ICON_SIZES
+)
+
 # Import utility functions
 from utils.flask_helpers import (
     validate_and_get_files,
@@ -509,6 +524,188 @@ def analyze():
                          analysis_errors=analysis_errors,
                          batch_insights=batch_insights,
                          is_single_analysis=len(analysis_results) == 1)
+
+@app.route("/svg_process", methods=["POST"])
+def svg_process():
+    # Get SVG files
+    files = request.files.getlist("svgs")
+    if not files or files[0].filename == "":
+        flash("Please choose at least one SVG file.")
+        return redirect(url_for("index", tab="svg"))
+
+    # Filter SVG files
+    svg_files = []
+    for f in files:
+        if f.filename.lower().endswith('.svg'):
+            svg_files.append(f)
+
+    if not svg_files:
+        flash("No valid SVG files were uploaded.")
+        return redirect(url_for("index", tab="svg"))
+
+    # Get processing options
+    optimize = request.form.get("optimize") == "on"
+    aggressive_optimization = request.form.get("aggressive_optimization") == "on"
+    validate = request.form.get("validate") == "on"
+    generate_pngs = request.form.get("generate_pngs") == "on"
+    app_icons = request.form.get("app_icons") == "on"
+    color_variants = request.form.get("color_variants") == "on"
+
+    # Get output directory
+    out_dir = get_output_directory(BASE_DIR, DEFAULT_OUTPUT)
+    
+    # Create SVG-specific output directory
+    svg_out_dir = out_dir / "svg_processed"
+    svg_out_dir.mkdir(exist_ok=True)
+
+    results = {
+        "optimized_svgs": [],
+        "png_variants": [],
+        "app_icon_sets": [],
+        "color_variant_sets": [],
+        "analysis_reports": []
+    }
+
+    for svg_file in svg_files:
+        # Read SVG content
+        svg_file.stream.seek(0)
+        svg_content = svg_file.stream.read().decode('utf-8')
+        base_name = sanitize_filename(svg_file.filename)
+
+        # Validation and analysis
+        if validate:
+            report = generate_svg_report(svg_content, svg_file.filename)
+            results["analysis_reports"].append(report)
+
+        # Optimization
+        if optimize:
+            optimization_result = optimize_svg(svg_content, aggressive_optimization)
+            optimized_content = optimization_result["optimized_svg"]
+            
+            # Save optimized SVG
+            optimized_filename = f"{base_name}_optimized.svg"
+            optimized_path = svg_out_dir / optimized_filename
+            with open(optimized_path, 'w', encoding='utf-8') as f:
+                f.write(optimized_content)
+            
+            optimization_result["filename"] = optimized_filename
+            optimization_result["path"] = str(optimized_path)
+            results["optimized_svgs"].append(optimization_result)
+            
+            # Use optimized content for further processing
+            svg_content = optimized_content
+
+        # PNG generation
+        if generate_pngs:
+            base_size = int(request.form.get("base_size", "48"))
+            density_set = request.form.get("density_set", "mobile")
+            
+            density_map = MOBILE_DENSITIES
+            if density_set == "ios":
+                density_map = {"1x": 1.0, "2x": 2.0, "3x": 3.0}
+            elif density_set == "android":
+                density_map = MOBILE_DENSITIES
+            elif density_set == "web":
+                density_map = {"1x": 1.0, "2x": 2.0, "3x": 3.0, "4x": 4.0}
+
+            png_dir = svg_out_dir / "png_variants"
+            png_results = svg_to_png_multi_density(
+                svg_content, base_size, png_dir, base_name, density_map
+            )
+            results["png_variants"].extend(png_results)
+
+        # App icon generation
+        if app_icons:
+            app_name = request.form.get("app_name", "MyApp")
+            platforms = request.form.getlist("platforms")
+            
+            if platforms:
+                icons_dir = svg_out_dir / "app_icons"
+                icon_sets = generate_app_icons(svg_content, icons_dir, app_name)
+                
+                # Filter by selected platforms
+                filtered_sets = {}
+                for platform in platforms:
+                    if platform in icon_sets:
+                        filtered_sets[platform] = icon_sets[platform]
+                
+                results["app_icon_sets"].append({
+                    "base_name": base_name,
+                    "app_name": app_name,
+                    "platforms": filtered_sets
+                })
+
+        # Color variants
+        if color_variants:
+            color_schemes = request.form.getlist("color_schemes")
+            primary_color = request.form.get("primary_color", "#0ea5e9")
+            secondary_color = request.form.get("secondary_color", "#64748b")
+            
+            color_map = {}
+            if "light_dark" in color_schemes:
+                color_map.update({
+                    "light": {"#000000": "#ffffff", "#000": "#fff"},
+                    "dark": {"#ffffff": "#000000", "#fff": "#000"}
+                })
+            
+            if "brand_colors" in color_schemes:
+                color_map.update({
+                    "primary": {"#0ea5e9": primary_color},
+                    "secondary": {"#64748b": secondary_color}
+                })
+            
+            if color_map:
+                variants = generate_color_variants(svg_content, color_map)
+                
+                # Save color variants
+                variant_dir = svg_out_dir / "color_variants"
+                variant_dir.mkdir(exist_ok=True)
+                
+                variant_files = []
+                for scheme_name, variant_svg in variants.items():
+                    variant_filename = f"{base_name}_{scheme_name}.svg"
+                    variant_path = variant_dir / variant_filename
+                    with open(variant_path, 'w', encoding='utf-8') as f:
+                        f.write(variant_svg)
+                    
+                    variant_files.append({
+                        "filename": variant_filename,
+                        "scheme": scheme_name,
+                        "path": str(variant_path)
+                    })
+                
+                results["color_variant_sets"].append({
+                    "base_name": base_name,
+                    "variants": variant_files
+                })
+
+    # ZIP download option
+    if request.form.get("zip") == "on":
+        mem = io.BytesIO()
+        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
+            # Add all generated files to ZIP
+            for root, dirs, files in os.walk(svg_out_dir):
+                for file in files:
+                    file_path = Path(root) / file
+                    arcname = file_path.relative_to(svg_out_dir)
+                    z.write(file_path, arcname=str(arcname))
+        
+        mem.seek(0)
+        return send_file(mem, as_attachment=True, download_name="svg_processed.zip", mimetype="application/zip")
+
+    # Return results
+    return render_template("index.html", 
+                         active_tab="svg",
+                         responsive_sizes=RESPONSIVE_SIZES,
+                         thumbnail_sizes=THUMBNAIL_SIZES,
+                         crop_methods=CROP_METHODS,
+                         favicon_sizes=FAVICON_SIZES,
+                         favicon_specs=FAVICON_SPECS,
+                         optimization_presets=OPTIMIZATION_PRESETS,
+                         web_formats=WEB_FORMATS,
+                         done=True,
+                         svg_results=results,
+                         svg_output_dir=str(svg_out_dir))
 
 if __name__ == "__main__":
     # kör lokalt

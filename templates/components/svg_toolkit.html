@@ -1,0 +1,145 @@
+<!-- SVG Toolkit Component -->
+<div class="tab-content {% if active_tab == 'svg' %}active{% endif %}">
+  <div class="content-card">
+    <h2>SVG Toolkit for Mobile Apps</h2>
+    <p>Comprehensive SVG processing tools designed for mobile app development. Optimize SVGs, generate multi-density icons, create color variants, and ensure mobile compatibility. Perfect for iOS, Android, and Flutter development workflows.</p>
+    
+    <form action="/svg_process" method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>1) Choose SVG files</legend>
+        <input type="file" name="svgs" accept=".svg" multiple required>
+        <p class="muted">Upload SVG files for optimization, conversion, or analysis.</p>
+      </fieldset>
+
+      <fieldset class="row">
+        <div>
+          <legend>2) Processing options</legend>
+          
+          <div class="processing-options">
+            <label><input type="checkbox" name="optimize" checked> Optimize SVG</label>
+            <p class="muted">Remove metadata, reduce file size, clean up code.</p>
+            
+            <label><input type="checkbox" name="aggressive_optimization"> Aggressive optimization</label>
+            <p class="muted">More aggressive file size reduction (may affect quality).</p>
+            
+            <label><input type="checkbox" name="validate"> Validate & analyze</label>
+            <p class="muted">Check for issues and mobile compatibility.</p>
+            
+            <label><input type="checkbox" name="generate_pngs"> Generate PNG variants</label>
+            <p class="muted">Convert to PNG at multiple densities for mobile apps.</p>
+            
+            <label><input type="checkbox" name="app_icons"> Generate app icon sets</label>
+            <p class="muted">Complete iOS, Android, and Flutter icon packages.</p>
+            
+            <label><input type="checkbox" name="color_variants"> Generate color variants</label>
+            <p class="muted">Create light/dark theme versions.</p>
+          </div>
+        </div>
+        
+        <div>
+          <legend>3) PNG conversion settings</legend>
+          <div id="png_settings" style="display: none;">
+            <label for="base_size">Base size (pixels)</label>
+            <select id="base_size" name="base_size">
+              <option value="24">24px (small icons)</option>
+              <option value="32">32px (medium icons)</option>
+              <option value="48" selected>48px (standard icons)</option>
+              <option value="64">64px (large icons)</option>
+              <option value="96">96px (extra large)</option>
+            </select>
+            
+            <label for="density_set">Density set</label>
+            <select id="density_set" name="density_set">
+              <option value="mobile" selected>Mobile (mdpi to xxxhdpi)</option>
+              <option value="ios">iOS (@1x to @3x)</option>
+              <option value="android">Android (mdpi to xxxhdpi)</option>
+              <option value="web">Web (1x to 4x)</option>
+            </select>
+          </div>
+          
+          <div id="app_icon_settings" style="display: none;">
+            <label for="app_name">App name</label>
+            <input type="text" id="app_name" name="app_name" placeholder="MyApp" value="MyApp">
+            <p class="muted">Used in generated filenames.</p>
+            
+            <label for="icon_platforms">Platforms</label>
+            <div class="platform-options">
+              <label><input type="checkbox" name="platforms" value="ios" checked> iOS</label>
+              <label><input type="checkbox" name="platforms" value="android" checked> Android</label>
+              <label><input type="checkbox" name="platforms" value="flutter"> Flutter</label>
+            </div>
+          </div>
+          
+          <div id="color_settings" style="display: none;">
+            <label for="color_scheme">Color schemes</label>
+            <div class="color-scheme-options">
+              <label><input type="checkbox" name="color_schemes" value="light_dark" checked> Light/Dark theme</label>
+              <label><input type="checkbox" name="color_schemes" value="brand_colors"> Brand color variants</label>
+              <label><input type="checkbox" name="color_schemes" value="accessibility"> Accessibility variants</label>
+            </div>
+            
+            <div id="custom_colors" style="margin-top: 1rem;">
+              <label for="primary_color">Primary color</label>
+              <input type="color" id="primary_color" name="primary_color" value="#0ea5e9">
+              
+              <label for="secondary_color">Secondary color</label>
+              <input type="color" id="secondary_color" name="secondary_color" value="#64748b">
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>4) Output options</legend>
+        <label for="svg_output_dir">Output directory</label>
+        <input type="text" id="svg_output_dir" name="output_dir" placeholder="e.g. output/svg or C:\Users\you\mobile_assets" />
+        
+        <label><input type="checkbox" name="zip"> Download as ZIP</label>
+        <label><input type="checkbox" name="organize_folders"> Organize in folders by type</label>
+        <p class="muted">Creates separate folders for optimized SVGs, PNGs, icons, etc.</p>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit">Process SVGs</button>
+        <span class="muted">Optimized for mobile development</span>
+      </div>
+    </form>
+  </div>
+  </div>
+</div>
+
+<script>
+// Handle dynamic form sections
+document.addEventListener('DOMContentLoaded', function() {
+  const generatePngs = document.querySelector('input[name="generate_pngs"]');
+  const appIcons = document.querySelector('input[name="app_icons"]');
+  const colorVariants = document.querySelector('input[name="color_variants"]');
+  
+  const pngSettings = document.getElementById('png_settings');
+  const appIconSettings = document.getElementById('app_icon_settings');
+  const colorSettings = document.getElementById('color_settings');
+  
+  function toggleSettings() {
+    if (generatePngs && pngSettings) {
+      pngSettings.style.display = generatePngs.checked ? 'block' : 'none';
+    }
+    
+    if (appIcons && appIconSettings) {
+      appIconSettings.style.display = appIcons.checked ? 'block' : 'none';
+    }
+    
+    if (colorVariants && colorSettings) {
+      colorSettings.style.display = colorVariants.checked ? 'block' : 'none';
+    }
+  }
+  
+  // Initial setup
+  toggleSettings();
+  
+  // Add event listeners
+  if (generatePngs) generatePngs.addEventListener('change', toggleSettings);
+  if (appIcons) appIcons.addEventListener('change', toggleSettings);
+  if (colorVariants) colorVariants.addEventListener('change', toggleSettings);
+});
+</script>
+</div>

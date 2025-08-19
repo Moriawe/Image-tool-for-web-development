@@ -22,6 +22,9 @@
   <!-- Image Analysis Tools Tab -->
   {% include "components/image_analysis.html" %}
 
+  <!-- SVG Toolkit Tab -->
+  {% include "components/svg_toolkit.html" %}
+
   <!-- Results Section -->
   {% include "components/results.html" %}
 {% endblock %}
@@ -123,6 +126,12 @@ document.addEventListener('DOMContentLoaded', function() {
   toggleLossless();
   updateFormatOptions();
   toggleFormatOptions('thumb'); // For thumbnail generator
+  
+  // Add additional event listener to ensure it works
+  const formatSelect = document.getElementById('output_format');
+  if (formatSelect) {
+    formatSelect.addEventListener('change', updateFormatOptions);
+  }
 });
 </script>
 {% endblock %}

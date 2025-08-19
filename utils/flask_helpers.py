@@ -7,6 +7,7 @@ from flask import request, flash, redirect, url_for, Response
 
 # Constants
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
+ALLOWED_SVG_EXT = {".svg"}
 DEFAULT_WEBP_QUALITY = 85
 DEFAULT_THUMBNAIL_QUALITY = 82
 DEFAULT_IMAGE_NAME = "image"

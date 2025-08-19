@@ -7,6 +7,85 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&display=swap" rel="stylesheet">
+  <script>
+    // Global function for format options - available immediately
+    function updateFormatOptions() {
+      toggleFormatOptions();
+    }
+    
+    function toggleFormatOptions(prefix = '') {
+      const formatSelect = document.getElementById(prefix ? `${prefix}_format_type` : 'output_format');
+      const qualitySection = document.getElementById(prefix ? `${prefix}_quality_option` : 'quality_section');
+      const losslessSection = document.getElementById(prefix ? `${prefix}_lossless_option` : 'lossless_section');
+      const formatInfo = document.getElementById(prefix ? `${prefix}_format_info` : 'format_info');
+      
+      if (!formatSelect) return;
+      
+      const format = formatSelect.value;
+      
+      // Format-specific information
+      const formatInfoData = {
+        webp: {
+          title: "WebP Benefits:",
+          points: [
+            "25-35% smaller than JPEG",
+            "Supports transparency", 
+            "Excellent browser support"
+          ]
+        },
+        avif: {
+          title: "AVIF Benefits:",
+          points: [
+            "50% smaller than JPEG",
+            "Superior compression",
+            "Growing browser support"
+          ]
+        },
+        jpeg: {
+          title: "JPEG Benefits:",
+          points: [
+            "Universal compatibility",
+            "Small file sizes",
+            "Best for photos"
+          ]
+        },
+        png: {
+          title: "PNG Benefits:",
+          points: [
+            "Lossless compression",
+            "Supports transparency",
+            "Best for graphics & logos"
+          ]
+        }
+      };
+      
+      // Update format info if element exists
+      if (formatInfo && formatInfoData[format]) {
+        const info = formatInfoData[format];
+        formatInfo.innerHTML = `
+          <h4>${info.title}</h4>
+          <ul style="font-size: 0.85em; margin: 0.5rem 0;">
+            ${info.points.map(point => `<li>${point}</li>`).join('')}
+          </ul>
+        `;
+      }
+      
+      // Show/hide options based on format
+      if (format === 'png') {
+        // PNG is inherently lossless
+        if (qualitySection) qualitySection.style.display = 'none';
+        if (losslessSection) losslessSection.style.display = 'none';
+      } else if (format === 'jpeg') {
+        // JPEG doesn't support lossless
+        if (qualitySection) qualitySection.style.display = 'block';
+        if (losslessSection) losslessSection.style.display = 'none';
+      } else {
+        // WebP and AVIF support both
+        if (qualitySection) qualitySection.style.display = 'block';
+        if (losslessSection) losslessSection.style.display = 'block';
+      }
+    }
+  </script>
   <style>
     body{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:2rem;background:#f6f7f9;color:#111}
     .card{max-width:900px;margin:0 auto;background:#fff;border-radius:14px;padding:0;box-shadow:0 8px 30px rgba(0,0,0,.06);overflow:hidden}

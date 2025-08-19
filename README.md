@@ -68,6 +68,15 @@ A comprehensive Flask-based web application│   ├── components/          
 - **Batch Analysis**: Overview insights with optimization potential and collective recommendations
 - **Visual Reports**: Color palette display, format scoring, and detailed breakdowns
 
+### 📐 SVG Toolkit for Mobile Apps
+- **SVG Optimization**: Remove metadata, clean up code, reduce file sizes
+- **Multi-Density PNG Export**: Generate PNG variants at different densities (mdpi to xxxhdpi)
+- **App Icon Generation**: Complete iOS, Android, and Flutter icon sets with proper naming
+- **Color Variants**: Generate light/dark theme versions and brand color variations
+- **Mobile Compatibility Analysis**: Check SVG compatibility and performance for mobile apps
+- **Batch Processing**: Process multiple SVGs with consistent settings
+- **Developer Integration**: Organized output folders and naming conventions for mobile workflows
+
 ## Installation
 
 1. **Clone or download** the project
@@ -85,6 +94,7 @@ A comprehensive Flask-based web application│   ├── components/          
 
 - **Flask**: Web framework
 - **Pillow (PIL)**: Image processing
+- **CairoSVG**: SVG rendering and conversion (for SVG toolkit)
 - **pathlib**: File path handling
 
 ## Project Structure
