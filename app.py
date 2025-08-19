@@ -1,6 +1,6 @@
-import os, io, zipfile
+import os
 from pathlib import Path
-from flask import Flask, render_template, request, send_from_directory, send_file, redirect, url_for, flash
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for, flash
 from PIL import Image, ImageOps
 
 # Import our processor modules
@@ -58,6 +58,12 @@ from utils.flask_helpers import (
     get_output_directory,
     get_quality_settings,
     validate_selections,
+    create_zip_response,
+    handle_processing_results,
+    get_format_settings,
+    prepare_template_data,
+    validate_and_get_svg_files,
+    create_svg_zip_response,
     ALLOWED_EXT,
     DEFAULT_THUMBNAIL_QUALITY
 )
@@ -124,19 +130,18 @@ def convert():
 
     # ZIP download option
     if request.form.get("zip") == "on":
-        mem = io.BytesIO()
-        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-            if converted:
-                for item in converted:
-                    z.write(out_dir / item["filename"], arcname=item["filename"])
-            if comparisons:
-                for comp in comparisons:
-                    for format_key, format_result in comp["formats"].items():
-                        if "filename" in format_result:
-                            z.write(out_dir / format_result["filename"], arcname=format_result["filename"])
-        mem.seek(0)
+        # Prepare files for ZIP
+        zip_files = []
+        if converted:
+            zip_files.extend(converted)
+        if comparisons:
+            for comp in comparisons:
+                for format_key, format_result in comp["formats"].items():
+                    if "filename" in format_result:
+                        zip_files.append({"name": format_result["filename"]})
+        
         download_name = f"converted-{output_format}.zip" if converted else "format-comparison.zip"
-        return send_file(mem, as_attachment=True, download_name=download_name, mimetype="application/zip")
+        return create_zip_response(zip_files, out_dir, download_name)
 
     # Prepare results for display
     if converted:
@@ -201,12 +206,7 @@ def responsive():
 
     # ZIP download option
     if request.form.get("zip") == "on":
-        mem = io.BytesIO()
-        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-            for item in all_results:
-                z.write(out_dir / item["name"], arcname=item["name"])
-        mem.seek(0)
-        return send_file(mem, as_attachment=True, download_name="responsive-images.zip", mimetype="application/zip")
+        return create_zip_response(all_results, out_dir, "responsive-images.zip")
 
     # Show results
     file_links = [url_for("serve_output", filename=item["name"]) for item in all_results]
@@ -247,11 +247,13 @@ def thumbnail():
 
     # Get settings
     crop_method = request.form.get("crop_method", "center")
-    format_type = request.form.get("format_type", "webp")
     out_dir = get_output_directory(BASE_DIR, DEFAULT_OUTPUT)
-    quality = int(request.form.get("quality", str(DEFAULT_THUMBNAIL_QUALITY)))
-    lossless = request.form.get("lossless") == "on" if format_type == "webp" else False
+    format_settings = get_format_settings()
+    quality = format_settings["quality"]
+    lossless = format_settings["lossless"]
+    format_type = format_settings["format_type"]
 
+    # Process thumbnails
     all_results = []
     for f in files:
         results = generate_thumbnails(f, out_dir, quality, lossless, 
@@ -259,26 +261,26 @@ def thumbnail():
         if results:
             all_results.extend(results)
 
-    if not all_results:
-        flash("No images were processed. Make sure images are valid.")
-        return redirect(url_for("index", tab="thumbnail"))
+    # Handle results
+    all_results, error_response = handle_processing_results(
+        all_results, "thumbnail", "No images were processed. Make sure images are valid."
+    )
+    if error_response:
+        return error_response
 
     # ZIP download option
     if request.form.get("zip") == "on":
-        mem = io.BytesIO()
-        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-            for item in all_results:
-                z.write(out_dir / item["name"], arcname=item["name"])
-        mem.seek(0)
-        return send_file(mem, as_attachment=True, download_name="thumbnails.zip", mimetype="application/zip")
+        return create_zip_response(all_results, out_dir, "thumbnails.zip")
 
-    # Show results
-    file_links = [url_for("serve_output", filename=item["name"]) for item in all_results]
-    items = list(zip(all_results, file_links))
-    
-    # Generate CSS and HTML examples
-    css_examples = generate_thumbnail_css(all_results)
-    html_examples = generate_thumbnail_html(all_results)
+    # Prepare template data
+    template_data = prepare_template_data(all_results, {
+        "css_examples": generate_thumbnail_css(all_results),
+        "html_examples": generate_thumbnail_html(all_results),
+        "lossless": lossless,
+        "quality": quality,
+        "format_type": format_type,
+        "crop_method": crop_method
+    })
     
     return render_template("index.html", 
                          active_tab="thumbnail",
@@ -290,14 +292,9 @@ def thumbnail():
                          optimization_presets=OPTIMIZATION_PRESETS,
                          web_formats=WEB_FORMATS,
                          done=True, 
-                         out_dir=str(out_dir), 
-                         items=items, 
-                         lossless=lossless, 
-                         quality=quality,
-                         css_examples=css_examples,
-                         html_examples=html_examples,
-                         format_type=format_type,
-                         crop_method=crop_method)
+                         out_dir=str(out_dir),
+                         **template_data)
+
 
 @app.route("/favicon", methods=["POST"])
 def favicon():
@@ -317,15 +314,19 @@ def favicon():
     background_color = request.form.get("background_color", "transparent")
     out_dir = get_output_directory(BASE_DIR, DEFAULT_OUTPUT)
 
+    # Process favicons
     all_results = []
     for f in files:
         results = generate_favicons(f, out_dir, selected_sizes, background_color)
         if results:
             all_results.extend(results)
 
-    if not all_results:
-        flash("No images were processed. Make sure images are valid.")
-        return redirect(url_for("index", tab="favicon"))
+    # Handle results
+    all_results, error_response = handle_processing_results(
+        all_results, "favicon", "No images were processed. Make sure images are valid."
+    )
+    if error_response:
+        return error_response
 
     # Create traditional favicon.ico if ICO sizes were selected
     ico_sizes = [s for s in selected_sizes if s.startswith("ico_")]
@@ -355,20 +356,14 @@ def favicon():
 
     # ZIP download option
     if request.form.get("zip") == "on":
-        mem = io.BytesIO()
-        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-            for item in all_results:
-                z.write(out_dir / item["name"], arcname=item["name"])
-        mem.seek(0)
-        return send_file(mem, as_attachment=True, download_name="favicons.zip", mimetype="application/zip")
+        return create_zip_response(all_results, out_dir, "favicons.zip")
 
-    # Show results
-    file_links = [url_for("serve_output", filename=item["name"]) for item in all_results]
-    items = list(zip(all_results, file_links))
-    
-    # Generate HTML and manifest examples
-    html_example = generate_favicon_html()
-    manifest_example = generate_favicon_manifest()
+    # Prepare template data
+    template_data = prepare_template_data(all_results, {
+        "background_color": background_color,
+        "html_example": generate_favicon_html(),
+        "manifest_example": generate_favicon_manifest()
+    })
     
     return render_template("index.html", 
                          active_tab="favicon",
@@ -380,11 +375,8 @@ def favicon():
                          optimization_presets=OPTIMIZATION_PRESETS,
                          web_formats=WEB_FORMATS,
                          done=True, 
-                         out_dir=str(out_dir), 
-                         items=items, 
-                         background_color=background_color,
-                         html_example=html_example,
-                         manifest_example=manifest_example)
+                         out_dir=str(out_dir),
+                         **template_data)
 
 @app.route("/optimize", methods=["POST"])
 def optimize():
@@ -446,22 +438,26 @@ def optimize():
         optimization_report = generate_optimization_report(results)
         batch_stats = None
 
-    if not results:
-        flash("No images were processed successfully.")
-        return redirect(url_for("index", tab="optimize"))
+    # Handle results
+    results, error_response = handle_processing_results(
+        results, "optimize", "No images were processed successfully."
+    )
+    if error_response:
+        return error_response
 
     # ZIP download option
     if request.form.get("zip") == "on":
-        mem = io.BytesIO()
-        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-            for item in results:
-                z.write(out_dir / item["filename"], arcname=item["filename"])
-        mem.seek(0)
-        return send_file(mem, as_attachment=True, download_name="optimized-images.zip", mimetype="application/zip")
+        return create_zip_response(results, out_dir, "optimized-images.zip")
 
-    # Show results
-    file_links = [url_for("serve_output", filename=item["filename"]) for item in results]
-    items = list(zip(results, file_links))
+    # Prepare template data
+    template_data = prepare_template_data(results, {
+        "optimization_results": results,
+        "optimization_errors": errors,
+        "optimization_report": optimization_report,
+        "batch_stats": batch_stats,
+        "preset": preset,
+        "output_format": output_format
+    })
     
     return render_template("index.html", 
                          active_tab="optimize",
@@ -473,14 +469,8 @@ def optimize():
                          optimization_presets=OPTIMIZATION_PRESETS,
                          web_formats=WEB_FORMATS,
                          done=True, 
-                         out_dir=str(out_dir), 
-                         items=items,
-                         optimization_results=results,
-                         optimization_errors=errors,
-                         optimization_report=optimization_report,
-                         batch_stats=batch_stats,
-                         preset=preset,
-                         output_format=output_format)
+                         out_dir=str(out_dir),
+                         **template_data)
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
@@ -506,9 +496,20 @@ def analyze():
         # Batch analysis
         analysis_results, analysis_errors, batch_insights = batch_analyze_images(files)
 
-    if not analysis_results:
-        flash("No images could be analyzed successfully.")
-        return redirect(url_for("index", tab="analyze"))
+    # Handle results
+    analysis_results, error_response = handle_processing_results(
+        analysis_results, "analyze", "No images could be analyzed successfully."
+    )
+    if error_response:
+        return error_response
+
+    # Prepare template data
+    template_data = {
+        "analysis_results": analysis_results,
+        "analysis_errors": analysis_errors,
+        "batch_insights": batch_insights,
+        "is_single_analysis": len(analysis_results) == 1
+    }
 
     return render_template("index.html", 
                          active_tab="analyze",
@@ -520,28 +521,14 @@ def analyze():
                          optimization_presets=OPTIMIZATION_PRESETS,
                          web_formats=WEB_FORMATS,
                          done=True,
-                         analysis_results=analysis_results,
-                         analysis_errors=analysis_errors,
-                         batch_insights=batch_insights,
-                         is_single_analysis=len(analysis_results) == 1)
+                         **template_data)
 
 @app.route("/svg_process", methods=["POST"])
 def svg_process():
-    # Get SVG files
-    files = request.files.getlist("svgs")
-    if not files or files[0].filename == "":
-        flash("Please choose at least one SVG file.")
-        return redirect(url_for("index", tab="svg"))
-
-    # Filter SVG files
-    svg_files = []
-    for f in files:
-        if f.filename.lower().endswith('.svg'):
-            svg_files.append(f)
-
-    if not svg_files:
-        flash("No valid SVG files were uploaded.")
-        return redirect(url_for("index", tab="svg"))
+    # Validate SVG files
+    svg_files, error_response = validate_and_get_svg_files("svg")
+    if error_response:
+        return error_response
 
     # Get processing options
     optimize = request.form.get("optimize") == "on"
@@ -681,17 +668,7 @@ def svg_process():
 
     # ZIP download option
     if request.form.get("zip") == "on":
-        mem = io.BytesIO()
-        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-            # Add all generated files to ZIP
-            for root, dirs, files in os.walk(svg_out_dir):
-                for file in files:
-                    file_path = Path(root) / file
-                    arcname = file_path.relative_to(svg_out_dir)
-                    z.write(file_path, arcname=str(arcname))
-        
-        mem.seek(0)
-        return send_file(mem, as_attachment=True, download_name="svg_processed.zip", mimetype="application/zip")
+        return create_svg_zip_response(svg_out_dir, "svg_processed.zip")
 
     # Return results
     return render_template("index.html", 
